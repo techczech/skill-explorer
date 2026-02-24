@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skill Explorer</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f6f8fa;
+    --surface2: #eef1f5;
+    --border: #d1d9e0;
+    --text: #1f2328;
+    --text-muted: #59636e;
+    --accent: #0969da;
+    --accent2: #1a7f37;
+    --accent3: #8250df;
+    --accent4: #cf222e;
+    --accent5: #bf5700;
+    --accent6: #0550ae;
+    --setup: #1a7f37;
+    --workflow: #0969da;
+    --reference: #8250df;
+    --troubleshooting: #cf222e;
+    --other: #bf5700;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.5; overflow-x: hidden;
+  }
+
+  /* ── Skill Identity Card ── */
+  .skill-identity {
+    max-width: 1400px; margin: 0 auto; padding: 1.5rem 2rem;
+  }
+  .identity-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 1.5rem; display: grid; grid-template-columns: 1fr auto; gap: 1.5rem;
+  }
+  .identity-main { min-width: 0; }
+  .identity-source {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    font-size: 0.7rem; color: var(--accent3); text-transform: uppercase;
+    letter-spacing: 0.06em; font-weight: 600; margin-bottom: 0.5rem;
+  }
+  .identity-source svg { width: 14px; height: 14px; }
+  .identity-name {
+    font-size: 1.8rem; font-weight: 700; font-family: 'SF Mono', 'Fira Code', monospace;
+    color: var(--accent3); margin-bottom: 0.25rem;
+  }
+  .identity-desc {
+    font-size: 1rem; color: var(--text); line-height: 1.6; margin-bottom: 0.75rem;
+  }
+  .identity-triggers-label {
+    font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 0.06em; font-weight: 600; margin-bottom: 0.35rem;
+  }
+  .identity-triggers {
+    display: flex; flex-wrap: wrap; gap: 0.35rem;
+  }
+  .trigger-pill {
+    background: var(--accent3)0a; border: 1px solid var(--accent3)33;
+    border-radius: 6px; padding: 0.2rem 0.55rem; font-size: 0.78rem; color: var(--accent3);
+  }
+  .identity-stats {
+    display: flex; flex-direction: column; gap: 0.6rem; align-items: flex-end;
+    justify-content: center; min-width: 140px;
+  }
+  .identity-stat {
+    text-align: right;
+  }
+  .identity-stat .num { font-size: 1.4rem; font-weight: 700; color: var(--accent); line-height: 1.1; }
+  .identity-stat .label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+
+  /* ── Tabs ── */
+  .tabs {
+    display: flex; justify-content: center; gap: 0.25rem; padding: 0.75rem 2rem 0;
+    border-bottom: 1px solid var(--border); flex-wrap: wrap;
+    position: sticky; top: 0; background: var(--bg); z-index: 50;
+  }
+  .tab {
+    padding: 0.6rem 1.2rem; cursor: pointer; color: var(--text-muted);
+    border-bottom: 2px solid transparent; font-size: 0.9rem; transition: all 0.2s;
+    background: none; border-top: none; border-left: none; border-right: none; font-family: inherit;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .view { display: none; max-width: 1400px; margin: 0 auto; }
+  .view.active { display: block; }
+
+  /* ── Tab 1: SKILL.md — split layout ── */
+  .skillmd-layout {
+    display: flex; min-height: calc(100vh - 250px);
+  }
+
+  /* TOC sidebar */
+  .toc-sidebar {
+    width: 280px; min-width: 280px; border-right: 1px solid var(--border);
+    overflow-y: auto; padding: 1rem 0; position: sticky; top: 48px;
+    height: calc(100vh - 250px); background: var(--surface);
+  }
+  .toc-title {
+    font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 0.06em; font-weight: 600; padding: 0 1rem 0.5rem;
+  }
+  .toc-item {
+    display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 1rem;
+    cursor: pointer; font-size: 0.82rem; color: var(--text-muted);
+    transition: background 0.15s; border-left: 3px solid transparent;
+  }
+  .toc-item:hover { background: var(--surface2); color: var(--text); }
+  .toc-item.active { background: var(--surface2); color: var(--text); border-left-color: var(--accent); }
+  .toc-item.h3 { padding-left: 2rem; }
+  .toc-dot {
+    width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0;
+  }
+  .toc-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .toc-lines { font-size: 0.7rem; color: var(--text-muted); flex-shrink: 0; }
+
+  /* Companion files in TOC */
+  .toc-files-label {
+    font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 0.06em; font-weight: 600; padding: 1rem 1rem 0.4rem;
+    border-top: 1px solid var(--border); margin-top: 0.5rem;
+  }
+  .toc-file-item {
+    display: flex; align-items: center; gap: 0.5rem; padding: 0.35rem 1rem;
+    cursor: pointer; font-size: 0.8rem; color: var(--accent6);
+    transition: background 0.15s;
+  }
+  .toc-file-item:hover { background: var(--surface2); }
+  .toc-file-icon { font-size: 0.75rem; color: var(--text-muted); }
+
+  /* Rendered SKILL.md content */
+  .skillmd-content {
+    flex: 1; padding: 1.5rem 2rem 3rem; overflow-y: auto; min-width: 0;
+  }
+
+  /* Section markers */
+  .section-marker {
+    display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.75rem;
+    border-radius: 6px; margin: 1.75rem 0 0.75rem; border-left: 4px solid;
+  }
+  .section-marker:first-child { margin-top: 0; }
+  .section-marker .section-type-badge {
+    font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.05em; padding: 0.15rem 0.5rem; border-radius: 4px;
+    flex-shrink: 0;
+  }
+  .section-marker .section-summary {
+    font-size: 0.82rem; color: var(--text-muted); flex: 1;
+  }
+  .section-marker .section-meta {
+    font-size: 0.72rem; color: var(--text-muted); flex-shrink: 0;
+    display: flex; gap: 0.5rem;
+  }
+  .section-marker .section-meta span { white-space: nowrap; }
+
+  .stype-setup { border-color: var(--setup); background: #1a7f370a; }
+  .stype-setup .section-type-badge { background: #1a7f3715; color: var(--setup); }
+  .stype-workflow { border-color: var(--workflow); background: #0969da0a; }
+  .stype-workflow .section-type-badge { background: #0969da15; color: var(--workflow); }
+  .stype-reference { border-color: var(--reference); background: #8250df0a; }
+  .stype-reference .section-type-badge { background: #8250df15; color: var(--reference); }
+  .stype-troubleshooting { border-color: var(--troubleshooting); background: #cf222e0a; }
+  .stype-troubleshooting .section-type-badge { background: #cf222e15; color: var(--troubleshooting); }
+  .stype-other { border-color: var(--other); background: #bf57000a; }
+  .stype-other .section-type-badge { background: #bf570015; color: var(--other); }
+
+  /* Referenced files inline */
+  .file-ref-pill {
+    display: inline-flex; align-items: center; gap: 0.25rem;
+    background: var(--accent6)0a; border: 1px solid var(--accent6)33;
+    border-radius: 4px; padding: 0.1rem 0.45rem; font-size: 0.75rem;
+    color: var(--accent6); cursor: pointer; margin: 0.1rem; transition: all 0.15s;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+  }
+  .file-ref-pill:hover { background: var(--accent6); color: white; }
+  .file-ref-pill svg { width: 12px; height: 12px; }
+
+  /* Markdown content */
+  .md-content h2 {
+    font-size: 1.3rem; font-weight: 700; margin-top: 0; margin-bottom: 0.5rem;
+    padding-bottom: 0.4rem; border-bottom: 1px solid var(--border);
+  }
+  .md-content h3 {
+    font-size: 1.1rem; font-weight: 600; margin-top: 0; margin-bottom: 0.4rem;
+    color: var(--text);
+  }
+  .md-content h4 { font-size: 0.95rem; font-weight: 600; margin-top: 0.8rem; margin-bottom: 0.3rem; color: var(--text-muted); }
+  .md-content p { margin-bottom: 0.5rem; font-size: 0.92rem; }
+  .md-content ul, .md-content ol { margin-bottom: 0.5rem; padding-left: 1.5rem; font-size: 0.92rem; }
+  .md-content li { margin-bottom: 0.2rem; }
+  .md-content code {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 3px;
+    padding: 0.1rem 0.3rem; font-size: 0.85em; font-family: 'SF Mono', 'Fira Code', monospace;
+  }
+  .md-content pre {
+    background: #282c34; color: #abb2bf; border-radius: 8px; padding: 1rem;
+    overflow-x: auto; margin: 0.5rem 0 0.75rem; font-size: 0.82rem; line-height: 1.5;
+  }
+  .md-content pre code { background: none; border: none; padding: 0; color: inherit; font-size: inherit; }
+  .md-content table { border-collapse: collapse; width: 100%; margin: 0.5rem 0 0.75rem; font-size: 0.85rem; }
+  .md-content th, .md-content td { border: 1px solid var(--border); padding: 0.4rem 0.6rem; text-align: left; }
+  .md-content th { background: var(--surface2); font-weight: 600; }
+  .md-content blockquote {
+    border-left: 3px solid var(--accent3); padding: 0.4rem 0.8rem; margin: 0.5rem 0;
+    color: var(--text-muted); background: var(--accent3)08; border-radius: 0 6px 6px 0; font-size: 0.9rem;
+  }
+  .md-content a { color: var(--accent); text-decoration: none; }
+  .md-content a:hover { text-decoration: underline; }
+  .md-content strong { font-weight: 600; }
+  .md-content hr { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
+
+  /* ── Tab 2: Structure Map ── */
+  .view-padded { padding: 2rem; }
+  .treemap-legend {
+    display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; justify-content: center;
+  }
+  .treemap-legend .chip {
+    display: flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: var(--text-muted);
+  }
+  .treemap-legend .chip .dot { width: 12px; height: 12px; border-radius: 3px; }
+  .treemap { display: grid; gap: 6px; width: 100%; }
+  .treemap-group {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem;
+  }
+  .treemap-group h3 {
+    font-size: 0.85rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;
+  }
+  .treemap-group h3 .loc { font-weight: 400; color: var(--text-muted); font-size: 0.75rem; }
+  .treemap-files { display: flex; flex-wrap: wrap; gap: 3px; }
+  .file-block {
+    border-radius: 4px; cursor: pointer; position: relative; transition: transform 0.15s, box-shadow 0.15s;
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+  }
+  .file-block:hover { transform: scale(1.08); box-shadow: 0 0 12px rgba(9,105,218,0.25); z-index: 2; }
+  .file-block .file-label {
+    font-size: 0.65rem; color: rgba(255,255,255,0.9); text-shadow: 0 1px 2px rgba(0,0,0,0.7);
+    padding: 2px 4px; text-align: center; line-height: 1.2; word-break: break-all; pointer-events: none;
+  }
+  .tooltip {
+    position: fixed; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 0.75rem 1rem; pointer-events: none;
+    z-index: 100; max-width: 380px; box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    display: none; font-size: 0.85rem;
+  }
+  .tooltip h4 { color: var(--accent); font-size: 0.9rem; margin-bottom: 0.3rem; }
+
+  /* ── Tab 3: Browse Code ── */
+  .code-browser { display: flex; gap: 0; min-height: 600px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin: 2rem; }
+  .code-sidebar {
+    width: 240px; min-width: 240px; background: var(--surface); border-right: 1px solid var(--border);
+    overflow-y: auto; padding: 0.75rem 0;
+  }
+  .sidebar-group-label {
+    font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;
+    padding: 0.5rem 0.75rem 0.25rem; font-weight: 600;
+  }
+  .sidebar-file {
+    padding: 0.35rem 0.75rem; cursor: pointer; font-size: 0.82rem; color: var(--text-muted);
+    transition: background 0.15s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .sidebar-file:hover { background: var(--surface2); color: var(--text); }
+  .sidebar-file.active { background: var(--accent); color: white; }
+  .code-viewer { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .code-file-header {
+    padding: 0.75rem 1rem; background: var(--surface); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 1rem;
+  }
+  .code-file-header h3 { font-size: 0.95rem; color: var(--accent); }
+  .code-file-header .meta { font-size: 0.8rem; color: var(--text-muted); }
+  .code-file-desc { font-size: 0.82rem; color: var(--text-muted); padding: 0.5rem 1rem; background: var(--surface2); border-bottom: 1px solid var(--border); }
+  .code-content { flex: 1; overflow: auto; background: #282c34; }
+  .code-content pre {
+    margin: 0; padding: 1rem; font-size: 0.82rem; line-height: 1.6; color: #abb2bf;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  }
+  .code-line { display: flex; }
+  .code-line:hover { background: rgba(255,255,255,0.04); }
+  .line-num {
+    display: inline-block; min-width: 3.5em; text-align: right; padding-right: 1em;
+    color: #636d83; user-select: none; flex-shrink: 0;
+  }
+  .line-content { flex: 1; white-space: pre-wrap; word-break: break-all; }
+  .code-refs { padding: 0.5rem 1rem; background: var(--surface); border-top: 1px solid var(--border); }
+  .code-refs-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.3rem; }
+
+  /* ── Tab 4: Skill Flow ── */
+  .flow-container { text-align: center; overflow-x: auto; }
+  .flow-help { color: var(--text-muted); text-align: center; margin-bottom: 1rem; font-size: 0.85rem; }
+  .flow-svg text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; }
+  .flow-svg .flow-node { cursor: pointer; }
+  .flow-svg .flow-node:hover rect { filter: brightness(0.97); }
+  .flow-svg .flow-node:hover text { text-decoration: underline; }
+
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.2); z-index: 150; display: none; }
+  .overlay.open { display: block; }
+
+  /* Syntax tokens */
+  .tok-kw { color: #c678dd; }
+  .tok-str { color: #98c379; }
+  .tok-cm { color: #5c6370; font-style: italic; }
+  .tok-num { color: #d19a66; }
+  .tok-fn { color: #61afef; }
+  .tok-op { color: #56b6c2; }
+  .tok-var { color: #e06c75; }
+  .tok-type { color: #e5c07b; }
+
+  @media (max-width: 900px) {
+    .identity-card { grid-template-columns: 1fr; }
+    .identity-stats { flex-direction: row; align-items: center; flex-wrap: wrap; }
+    .identity-stat { text-align: center; }
+    .skillmd-layout { flex-direction: column; }
+    .toc-sidebar { width: 100%; min-width: 100%; height: auto; max-height: 200px; position: static; border-right: none; border-bottom: 1px solid var(--border); }
+    .tabs { gap: 0; }
+    .tab { padding: 0.5rem 0.7rem; font-size: 0.8rem; }
+    .code-sidebar { width: 180px; min-width: 180px; }
+    .code-browser { min-height: 400px; margin: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Skill Identity Card -->
+<div class="skill-identity" id="skill-identity"></div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <button class="tab active" data-view="skillmd">SKILL.md</button>
+  <button class="tab" data-view="structure">Structure Map</button>
+  <button class="tab" data-view="code">Browse Code</button>
+  <button class="tab" data-view="flow">Skill Flow</button>
+</div>
+
+<!-- Tab 1: SKILL.md -->
+<div class="view active" id="skillmd">
+  <div class="skillmd-layout">
+    <div class="toc-sidebar" id="toc-sidebar"></div>
+    <div class="skillmd-content" id="skillmd-content"></div>
+  </div>
+</div>
+
+<!-- Tab 2: Structure Map -->
+<div class="view view-padded" id="structure">
+  <div class="treemap-legend" id="treemap-legend"></div>
+  <div class="treemap" id="treemap-grid"></div>
+</div>
+
+<!-- Tab 3: Browse Code -->
+<div class="view" id="code">
+  <div class="code-browser">
+    <div class="code-sidebar" id="code-sidebar"></div>
+    <div class="code-viewer" id="code-viewer">
+      <div class="code-file-header"><h3>Select a file</h3></div>
+      <div class="code-content"><pre style="color:#636d83;padding:2rem;text-align:center;">Click a file in the sidebar to view its contents</pre></div>
+    </div>
+  </div>
+</div>
+
+<!-- Tab 4: Skill Flow -->
+<div class="view view-padded" id="flow"></div>
+
+<div class="tooltip" id="tooltip"></div>
+<div class="overlay" id="overlay"></div>
+
+<script>
+// ─── DATA (injected by agent) ───────────────────────────────────────────
+const DATA = {};
+
+// ─── TYPE COLORS & LABELS ───────────────────────────────────────────────
+const TYPE_COLORS = {
+  setup: '#1a7f37', workflow: '#0969da', reference: '#8250df',
+  troubleshooting: '#cf222e', other: '#bf5700',
+};
+const TYPE_LABELS = {
+  setup: 'Setup', workflow: 'Workflow', reference: 'Reference',
+  troubleshooting: 'Troubleshooting', other: 'Other',
+};
+const FILE_ICON = '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M3.75 1.5a.25.25 0 00-.25.25v12.5c0 .138.112.25.25.25h8.5a.25.25 0 00.25-.25V4.664a.25.25 0 00-.073-.177l-2.914-2.914a.25.25 0 00-.177-.073H3.75zM2 1.75C2 .784 2.784 0 3.75 0h5.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0112.25 16h-8.5A1.75 1.75 0 012 14.25V1.75z"/></svg>';
+
+// ─── SKILL IDENTITY CARD ────────────────────────────────────────────────
+function renderIdentity() {
+  const s = DATA.skill;
+  const totalSections = DATA.sections.length;
+  const totalFiles = DATA.files.length + DATA.docs.length;
+  const totalCodeBlocks = DATA.sections.reduce((n, sec) => n + (sec.codeBlocks || 0), 0);
+  const totalTables = DATA.sections.reduce((n, sec) => n + (sec.tables || 0), 0);
+  const triggers = s.triggers || [];
+
+  document.getElementById('skill-identity').innerHTML = `
+    <div class="identity-card">
+      <div class="identity-main">
+        <div class="identity-source">
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M3.75 1.5a.25.25 0 00-.25.25v12.5c0 .138.112.25.25.25h8.5a.25.25 0 00.25-.25V4.664a.25.25 0 00-.073-.177l-2.914-2.914a.25.25 0 00-.177-.073H3.75z"/></svg>
+          YAML Frontmatter &mdash; ${esc(s.path)}
+        </div>
+        <div class="identity-name">${esc(s.name)}</div>
+        <div class="identity-desc">${esc(s.description)}</div>
+        ${triggers.length ? `
+          <div class="identity-triggers-label">Triggers</div>
+          <div class="identity-triggers">
+            ${triggers.map(t => `<span class="trigger-pill">${esc(t)}</span>`).join('')}
+          </div>
+        ` : ''}
+      </div>
+      <div class="identity-stats">
+        <div class="identity-stat"><div class="num">${s.totalLines}</div><div class="label">Lines</div></div>
+        <div class="identity-stat"><div class="num">${totalSections}</div><div class="label">Sections</div></div>
+        <div class="identity-stat"><div class="num">${totalFiles}</div><div class="label">Files</div></div>
+        <div class="identity-stat"><div class="num">${totalCodeBlocks}</div><div class="label">Code Blocks</div></div>
+      </div>
+    </div>
+  `;
+  document.title = `${s.name} — Skill Explorer`;
+}
+
+// ─── TAB 1: SKILL.MD ───────────────────────────────────────────────────
+function renderSkillMd() {
+  renderTocSidebar();
+  renderSkillContent();
+}
+
+function renderTocSidebar() {
+  const sidebar = document.getElementById('toc-sidebar');
+  let html = '<div class="toc-title">Sections</div>';
+
+  DATA.sections.forEach(sec => {
+    const color = TYPE_COLORS[sec.type] || TYPE_COLORS.other;
+    const cls = sec.level === 3 ? 'toc-item h3' : 'toc-item';
+    html += `<div class="${cls}" data-section="${sec.id}">
+      <span class="toc-dot" style="background:${color}"></span>
+      <span class="toc-label">${esc(sec.heading)}</span>
+      <span class="toc-lines">${sec.lines}L</span>
+    </div>`;
+  });
+
+  // Companion files
+  const allFiles = [...(DATA.docs || []), ...(DATA.files || [])];
+  if (allFiles.length) {
+    html += '<div class="toc-files-label">Companion Files</div>';
+    allFiles.forEach(f => {
+      html += `<div class="toc-file-item" data-file="${esc(f.path)}">
+        <span class="toc-file-icon">${FILE_ICON}</span>
+        <span class="toc-label">${esc(f.name)}</span>
+        <span class="toc-lines">${f.lines}L</span>
+      </div>`;
+    });
+  }
+
+  sidebar.innerHTML = html;
+
+  // Bind TOC clicks
+  sidebar.querySelectorAll('.toc-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const el = document.getElementById('sec-' + item.dataset.section);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Highlight TOC item
+        sidebar.querySelectorAll('.toc-item').forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+      }
+    });
+  });
+
+  sidebar.querySelectorAll('.toc-file-item').forEach(item => {
+    item.addEventListener('click', () => navigateToFile(item.dataset.file));
+  });
+}
+
+function renderSkillContent() {
+  const content = document.getElementById('skillmd-content');
+  let html = '';
+
+  DATA.sections.forEach(sec => {
+    const typeClass = `stype-${sec.type || 'other'}`;
+    const typeLabel = TYPE_LABELS[sec.type] || sec.type || 'Other';
+
+    // File reference pills for this section
+    const refPills = (sec.referencedFiles || []).length
+      ? `<span style="margin-left:0.5rem">${sec.referencedFiles.map(f => {
+          const fname = f.split('/').pop();
+          return `<span class="file-ref-pill" data-file="${esc(f)}">${FILE_ICON} ${esc(fname)}</span>`;
+        }).join('')}</span>`
+      : '';
+
+    // Section marker with type badge, summary, and metadata
+    html += `<div id="sec-${sec.id}" class="section-marker ${typeClass}">
+      <span class="section-type-badge">${typeLabel}</span>
+      <span class="section-summary">${esc(sec.summary || '')}</span>
+      <span class="section-meta">
+        ${sec.codeBlocks ? `<span>${sec.codeBlocks} code</span>` : ''}
+        ${sec.tables ? `<span>${sec.tables} table${sec.tables > 1 ? 's' : ''}</span>` : ''}
+        <span>L${sec.startLine}–${sec.endLine}</span>
+        ${refPills}
+      </span>
+    </div>`;
+
+    // Rendered markdown content
+    html += `<div class="md-content">${renderMarkdown(sec.markdown || '')}</div>`;
+  });
+
+  content.innerHTML = html;
+
+  // Bind file reference pills
+  content.querySelectorAll('.file-ref-pill').forEach(pill => {
+    pill.addEventListener('click', e => {
+      e.stopPropagation();
+      navigateToFile(pill.dataset.file);
+    });
+  });
+
+  // Intersection observer for TOC highlighting
+  const tocItems = document.querySelectorAll('.toc-item');
+  const sectionEls = document.querySelectorAll('[id^="sec-"]');
+  if ('IntersectionObserver' in window && sectionEls.length) {
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const id = entry.target.id.replace('sec-', '');
+          tocItems.forEach(i => i.classList.toggle('active', i.dataset.section === id));
+        }
+      });
+    }, { rootMargin: '-100px 0px -60% 0px' });
+    sectionEls.forEach(el => observer.observe(el));
+  }
+}
+
+// ─── TAB 2: STRUCTURE MAP ──────────────────────────────────────────────
+function renderStructure() {
+  const legend = document.getElementById('treemap-legend');
+  legend.innerHTML = '';
+  for (const [type, color] of Object.entries(TYPE_COLORS)) {
+    legend.innerHTML += `<div class="chip"><div class="dot" style="background:${color}"></div>${TYPE_LABELS[type]}</div>`;
+  }
+
+  const grid = document.getElementById('treemap-grid');
+  grid.innerHTML = '';
+
+  const groups = {};
+  DATA.sections.forEach(sec => {
+    const type = sec.type || 'other';
+    if (!groups[type]) groups[type] = { sections: [], totalLines: 0 };
+    groups[type].sections.push(sec);
+    groups[type].totalLines += sec.lines;
+  });
+
+  Object.entries(groups).forEach(([type, group]) => {
+    const color = TYPE_COLORS[type] || TYPE_COLORS.other;
+    const div = document.createElement('div');
+    div.className = 'treemap-group';
+    div.innerHTML = `<h3><span style="color:${color}">${TYPE_LABELS[type] || type}</span> <span class="loc">${group.totalLines} lines &middot; ${group.sections.length} sections</span></h3>`;
+
+    const filesDiv = document.createElement('div');
+    filesDiv.className = 'treemap-files';
+    const maxLines = Math.max(...group.sections.map(s => s.lines), 1);
+
+    group.sections.forEach(sec => {
+      const size = Math.max(50, Math.sqrt(sec.lines / maxLines) * 110);
+      const block = document.createElement('div');
+      block.className = 'file-block';
+      const alpha = 0.4 + 0.6 * (sec.lines / maxLines);
+      block.style.cssText = `width:${size}px;height:${size}px;background:${color};opacity:${alpha};`;
+      if (size > 45) {
+        const label = sec.heading.length > 18 ? sec.heading.slice(0, 16) + '..' : sec.heading;
+        block.innerHTML = `<span class="file-label">${esc(label)}</span>`;
+      }
+      block.addEventListener('mouseenter', e => showTooltip(e, sec, type));
+      block.addEventListener('mousemove', moveTooltip);
+      block.addEventListener('mouseleave', hideTooltip);
+      block.addEventListener('click', () => scrollToSection(sec.id));
+      filesDiv.appendChild(block);
+
+      // Referenced file blocks
+      if (sec.referencedFiles) {
+        sec.referencedFiles.forEach(fpath => {
+          const file = DATA.files.find(f => f.path === fpath);
+          const fSize = Math.max(28, (file ? Math.sqrt(file.lines / 200) * 30 : 28));
+          const fb = document.createElement('div');
+          fb.className = 'file-block';
+          fb.style.cssText = `width:${fSize}px;height:${fSize}px;background:${color};opacity:0.3;border:1px dashed rgba(255,255,255,0.5);`;
+          if (fSize > 35) {
+            const fname = fpath.split('/').pop();
+            fb.innerHTML = `<span class="file-label" style="font-size:0.55rem">${esc(fname)}</span>`;
+          }
+          fb.addEventListener('click', () => navigateToFile(fpath));
+          fb.title = fpath;
+          filesDiv.appendChild(fb);
+        });
+      }
+    });
+    div.appendChild(filesDiv);
+    grid.appendChild(div);
+  });
+}
+
+// ─── TAB 3: BROWSE CODE ────────────────────────────────────────────────
+function renderCodeBrowser() {
+  const sidebar = document.getElementById('code-sidebar');
+  sidebar.innerHTML = '';
+
+  function addGroupLabel(text) {
+    const label = document.createElement('div');
+    label.className = 'sidebar-group-label';
+    label.textContent = text;
+    sidebar.appendChild(label);
+  }
+
+  function addFileEntry(file) {
+    const el = document.createElement('div');
+    el.className = 'sidebar-file';
+    el.textContent = file.name;
+    el.dataset.path = file.path;
+    el.addEventListener('click', () => showFile(file, el));
+    sidebar.appendChild(el);
+  }
+
+  if (DATA.docs && DATA.docs.length) {
+    addGroupLabel('Documentation');
+    DATA.docs.forEach(addFileEntry);
+  }
+
+  if (DATA.files && DATA.files.length) {
+    const dirs = {};
+    DATA.files.forEach(f => {
+      const parts = f.path.split('/');
+      const dir = parts.length > 1 ? parts.slice(0, -1).join('/') : '.';
+      if (!dirs[dir]) dirs[dir] = [];
+      dirs[dir].push(f);
+    });
+    Object.entries(dirs).forEach(([dir, files]) => {
+      addGroupLabel(dir === '.' ? 'Files' : dir);
+      files.forEach(addFileEntry);
+    });
+  }
+}
+
+function showFile(file, sidebarEl) {
+  document.querySelectorAll('.sidebar-file').forEach(el => el.classList.remove('active'));
+  if (sidebarEl) sidebarEl.classList.add('active');
+
+  const viewer = document.getElementById('code-viewer');
+  const lang = file.language || detectLanguage(file.path || file.name);
+  const content = file.content || '';
+  const lines = content.split('\n');
+
+  const refsHtml = file.referencedBy && file.referencedBy.length
+    ? `<div class="code-refs">
+         <div class="code-refs-label">Referenced by sections</div>
+         ${file.referencedBy.map(sid => {
+           const sec = DATA.sections.find(s => s.id === sid);
+           return `<span class="file-ref-pill" data-section="${esc(sid)}" style="cursor:pointer">${esc(sec ? sec.heading : sid)}</span>`;
+         }).join('')}
+       </div>`
+    : '';
+
+  viewer.innerHTML = `
+    <div class="code-file-header">
+      <h3>${esc(file.name)}</h3>
+      <span class="meta">${file.lines || lines.length} lines &middot; ${lang}</span>
+    </div>
+    ${file.description ? `<div class="code-file-desc">${esc(file.description)}</div>` : ''}
+    <div class="code-content"><pre>${highlightCode(content, lang)}</pre></div>
+    ${refsHtml}
+  `;
+
+  viewer.querySelectorAll('.file-ref-pill[data-section]').forEach(pill => {
+    pill.addEventListener('click', () => scrollToSection(pill.dataset.section));
+  });
+}
+
+function navigateToFile(path) {
+  switchTab('code');
+  let file = DATA.files.find(f => f.path === path);
+  if (!file) file = DATA.docs.find(d => d.path === path);
+  if (!file) return;
+  const sidebarEl = document.querySelector(`.sidebar-file[data-path="${path}"]`);
+  showFile(file, sidebarEl);
+}
+
+function detectLanguage(name) {
+  const ext = (name || '').split('.').pop().toLowerCase();
+  const map = { sh: 'bash', bash: 'bash', py: 'python', ts: 'typescript', js: 'javascript', md: 'markdown', json: 'json', yaml: 'yaml', yml: 'yaml', toml: 'toml', css: 'css', html: 'html', sql: 'sql', rs: 'rust', go: 'go', rb: 'ruby', zsh: 'bash' };
+  return map[ext] || 'text';
+}
+
+// ─── TAB 4: SKILL FLOW ─────────────────────────────────────────────────
+function renderFlow() {
+  const container = document.getElementById('flow');
+  const W = Math.min(1100, window.innerWidth - 80);
+  const cx = W / 2;
+
+  // Build flow: H2 sections are main steps, H3s are sub-steps indented
+  // Companion files branch off to the right from sections that reference them
+  const h2Sections = DATA.sections.filter(s => s.level === 2);
+  const allFiles = [...(DATA.files || []), ...(DATA.docs || [])];
+
+  // Layout constants
+  const boxW = 340;
+  const boxH = 52;
+  const subBoxW = 260;
+  const subBoxH = 36;
+  const fileBoxW = 180;
+  const fileBoxH = 32;
+  const gapY = 16;
+  const subGap = 8;
+  const fileGap = 12;
+  const subIndent = 50;
+
+  // First pass: compute positions
+  let y = 30;
+  const positions = []; // {sec, x, y, w, h, type:'section'|'sub'}
+  const filePositions = []; // {file, x, y, secId}
+  const filesSeen = new Set();
+
+  h2Sections.forEach((h2, h2i) => {
+    const color = TYPE_COLORS[h2.type] || TYPE_COLORS.other;
+    positions.push({ sec: h2, x: cx - boxW/2, y, w: boxW, h: boxH, color });
+
+    // File branches for this H2
+    const h2Files = (h2.referencedFiles || []).filter(f => !filesSeen.has(f));
+    h2Files.forEach((fpath, fi) => {
+      filesSeen.add(fpath);
+      const file = allFiles.find(f => f.path === fpath);
+      const fx = cx + boxW/2 + 40;
+      const fy = y + fi * (fileBoxH + fileGap);
+      filePositions.push({ file: file || { path: fpath, name: fpath.split('/').pop() }, x: fx, y: fy, secY: y + boxH/2, secId: h2.id });
+    });
+
+    const stepY = y + boxH;
+    y += boxH + gapY;
+
+    // Sub-sections (H3s that belong to this H2)
+    const h2Idx = DATA.sections.indexOf(h2);
+    const subs = [];
+    for (let j = h2Idx + 1; j < DATA.sections.length; j++) {
+      if (DATA.sections[j].level <= 2) break;
+      if (DATA.sections[j].level === 3) subs.push(DATA.sections[j]);
+    }
+
+    subs.forEach((sub, si) => {
+      const subColor = TYPE_COLORS[sub.type] || color;
+      positions.push({ sec: sub, x: cx - subBoxW/2 + subIndent, y, w: subBoxW, h: subBoxH, color: subColor, isSub: true });
+
+      // File branches for sub-section
+      const subFiles = (sub.referencedFiles || []).filter(f => !filesSeen.has(f));
+      subFiles.forEach((fpath, fi) => {
+        filesSeen.add(fpath);
+        const file = allFiles.find(f => f.path === fpath);
+        const fx = cx + subBoxW/2 + subIndent + 40;
+        const fy = y + fi * (fileBoxH + fileGap);
+        filePositions.push({ file: file || { path: fpath, name: fpath.split('/').pop() }, x: fx, y: fy, secY: y + subBoxH/2, secId: sub.id });
+      });
+
+      y += subBoxH + subGap;
+    });
+
+    if (subs.length) y += gapY - subGap; // extra gap after sub-group
+  });
+
+  const H = y + 20;
+
+  // Render SVG
+  let svg = `<svg class="flow-svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`;
+  svg += `<defs>
+    <marker id="flow-arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#afb8c1"/>
+    </marker>
+    <marker id="file-arrow" markerWidth="6" markerHeight="5" refX="6" refY="2.5" orient="auto">
+      <polygon points="0 0, 6 2.5, 0 5" fill="#afb8c1"/>
+    </marker>
+  </defs>`;
+
+  // Draw vertical connectors between H2 sections
+  const h2Positions = positions.filter(p => !p.isSub);
+  for (let i = 0; i < h2Positions.length - 1; i++) {
+    const a = h2Positions[i];
+    const b = h2Positions[i + 1];
+    const y1 = a.y + a.h;
+    const y2 = b.y;
+    svg += `<line x1="${cx}" y1="${y1}" x2="${cx}" y2="${y2}" stroke="#afb8c1" stroke-width="2" marker-end="url(#flow-arrow)"/>`;
+  }
+
+  // Draw bracket lines from H2 to its H3 children
+  positions.forEach((p, i) => {
+    if (p.isSub) {
+      // Find parent H2 — the nearest non-sub position before this one
+      let parent = null;
+      for (let j = i - 1; j >= 0; j--) {
+        if (!positions[j].isSub) { parent = positions[j]; break; }
+      }
+      if (parent) {
+        const px = parent.x + 12;
+        const fromY = parent.y + parent.h;
+        const toY = p.y + p.h / 2;
+        svg += `<path d="M${px},${fromY} L${px},${toY} L${p.x},${toY}" fill="none" stroke="${parent.color}44" stroke-width="1.5" stroke-dasharray="4,3"/>`;
+      }
+    }
+  });
+
+  // Draw file branch lines
+  filePositions.forEach(fp => {
+    const p = positions.find(pp => pp.sec.id === fp.secId);
+    if (!p) return;
+    const x1 = p.x + p.w;
+    const y1 = fp.secY;
+    const x2 = fp.x;
+    const y2 = fp.y + fileBoxH / 2;
+    svg += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#afb8c1" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#file-arrow)"/>`;
+  });
+
+  // Draw section boxes
+  positions.forEach(p => {
+    const sec = p.sec;
+    const color = p.color;
+    const label = sec.heading.length > (p.isSub ? 30 : 36) ? sec.heading.slice(0, p.isSub ? 28 : 34) + '..' : sec.heading;
+    const typeLabel = TYPE_LABELS[sec.type] || sec.type;
+    const fontSize = p.isSub ? 11 : 13;
+    const typeFontSize = p.isSub ? 9 : 10;
+
+    svg += `<g class="flow-node" data-id="${sec.id}">`;
+    svg += `<rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" rx="8" fill="${color}08" stroke="${color}" stroke-width="1.5"/>`;
+
+    if (p.isSub) {
+      svg += `<text x="${p.x + 10}" y="${p.y + 22}" fill="${color}" font-size="${fontSize}" font-weight="600" pointer-events="none">${esc(label)}</text>`;
+    } else {
+      svg += `<text x="${p.x + 10}" y="${p.y + 20}" fill="${color}" font-size="${fontSize}" font-weight="700" pointer-events="none">${esc(label)}</text>`;
+      if (sec.summary) {
+        const sum = sec.summary.length > 50 ? sec.summary.slice(0, 48) + '..' : sec.summary;
+        svg += `<text x="${p.x + 10}" y="${p.y + 36}" fill="#59636e" font-size="${typeFontSize}" pointer-events="none">${esc(sum)}</text>`;
+      }
+    }
+
+    // Type pill
+    const pillW = typeLabel.length * 6.5 + 12;
+    const pillX = p.x + p.w - pillW - 8;
+    const pillY = p.y + (p.h - 18) / 2;
+    svg += `<rect x="${pillX}" y="${pillY}" width="${pillW}" height="18" rx="4" fill="${color}18"/>`;
+    svg += `<text x="${pillX + pillW/2}" y="${pillY + 13}" fill="${color}" font-size="${typeFontSize}" font-weight="600" text-anchor="middle" pointer-events="none">${typeLabel}</text>`;
+
+    svg += `</g>`;
+  });
+
+  // Draw file boxes
+  filePositions.forEach(fp => {
+    const fname = fp.file.name || fp.file.path.split('/').pop();
+    const lines = fp.file.lines ? ` ${fp.file.lines}L` : '';
+    svg += `<g class="flow-node" data-file="${esc(fp.file.path)}">`;
+    svg += `<rect x="${fp.x}" y="${fp.y}" width="${fileBoxW}" height="${fileBoxH}" rx="6" fill="#0550ae08" stroke="#0550ae" stroke-width="1" stroke-dasharray="4,2"/>`;
+    svg += `<text x="${fp.x + 8}" y="${fp.y + 20}" fill="#0550ae" font-size="11" font-weight="500" pointer-events="none">${esc(fname)}${lines}</text>`;
+    svg += `</g>`;
+  });
+
+  svg += '</svg>';
+
+  // Legend
+  let legendHtml = '<div style="display:flex;justify-content:center;gap:1.5rem;margin-bottom:0.75rem;flex-wrap:wrap;">';
+  for (const [type, color] of Object.entries(TYPE_COLORS)) {
+    legendHtml += `<span style="display:flex;align-items:center;gap:0.3rem;font-size:0.8rem;color:var(--text-muted)"><span style="width:10px;height:10px;border-radius:2px;background:${color};display:inline-block"></span>${TYPE_LABELS[type]}</span>`;
+  }
+  legendHtml += `<span style="display:flex;align-items:center;gap:0.3rem;font-size:0.8rem;color:var(--text-muted)"><span style="width:10px;height:10px;border-radius:2px;background:#0550ae;display:inline-block;opacity:0.4"></span>Companion File</span>`;
+  legendHtml += '</div>';
+
+  container.innerHTML = `
+    <p class="flow-help">Reading flow of the SKILL.md. H2 sections are main steps; H3 sub-sections branch underneath. Companion files shown as dashed nodes. Click any node to navigate.</p>
+    ${legendHtml}
+    <div class="flow-container">${svg}</div>
+  `;
+
+  // Click handlers
+  container.querySelectorAll('.flow-node[data-id]').forEach(node => {
+    node.addEventListener('click', () => scrollToSection(node.dataset.id));
+  });
+  container.querySelectorAll('.flow-node[data-file]').forEach(node => {
+    node.addEventListener('click', () => navigateToFile(node.dataset.file));
+  });
+}
+
+// ─── MARKDOWN RENDERER ─────────────────────────────────────────────────
+function renderMarkdown(md) {
+  if (!md) return '';
+  let html = md;
+
+  // Remove the section heading itself (it's shown in the marker)
+  html = html.replace(/^#{2,3}\s+.+$/m, '');
+
+  // Fenced code blocks
+  html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
+    return `<pre><code class="language-${lang}">${highlightCode(code.trimEnd(), lang || 'text')}</code></pre>`;
+  });
+
+  // Inline code
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+  // Tables
+  html = html.replace(/^(\|.+\|)\n(\|[-:| ]+\|)\n((?:\|.+\|\n?)*)/gm, (_, headerRow, sepRow, bodyRows) => {
+    const headers = headerRow.split('|').filter(c => c.trim());
+    const aligns = sepRow.split('|').filter(c => c.trim()).map(c => {
+      if (c.startsWith(':') && c.endsWith(':')) return 'center';
+      if (c.endsWith(':')) return 'right';
+      return 'left';
+    });
+    let t = '<table><thead><tr>';
+    headers.forEach((h, i) => { t += `<th style="text-align:${aligns[i] || 'left'}">${h.trim()}</th>`; });
+    t += '</tr></thead><tbody>';
+    bodyRows.trim().split('\n').forEach(row => {
+      const cells = row.split('|').filter(c => c.trim());
+      t += '<tr>';
+      cells.forEach((c, i) => { t += `<td style="text-align:${aligns[i] || 'left'}">${c.trim()}</td>`; });
+      t += '</tr>';
+    });
+    t += '</tbody></table>';
+    return t;
+  });
+
+  // Headings (h4 only since h2/h3 are section-level)
+  html = html.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
+  html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+
+  // Blockquotes
+  html = html.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
+
+  // Bold
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+
+  // Italic
+  html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+
+  // Links
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+
+  // Unordered lists
+  html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
+  html = html.replace(/(<li>.*<\/li>\n?)+/g, m => `<ul>${m}</ul>`);
+
+  // HTML comments (hide)
+  html = html.replace(/<!--[\s\S]*?-->/g, '');
+
+  // Paragraphs
+  html = html.replace(/^(?!<[huptlbo]|$)(.+)$/gm, '<p>$1</p>');
+
+  return html;
+}
+
+// ─── SYNTAX HIGHLIGHTING ───────────────────────────────────────────────
+function highlightCode(code, lang) {
+  const lines = code.split('\n');
+  return lines.map((line, i) => {
+    return `<div class="code-line"><span class="line-num">${i + 1}</span><span class="line-content">${highlightLine(line, lang)}</span></div>`;
+  }).join('');
+}
+
+function highlightLine(line, lang) {
+  let s = escHtml(line);
+  if (['bash','python','yaml','toml','ruby'].includes(lang)) s = s.replace(/(#.*)$/, '<span class="tok-cm">$1</span>');
+  if (['javascript','typescript','json','go','rust','css'].includes(lang)) s = s.replace(/(\/\/.*)$/, '<span class="tok-cm">$1</span>');
+  s = s.replace(/(&quot;(?:[^&]|&(?!quot;))*?&quot;|&#39;(?:[^&]|&(?!#39;))*?&#39;)/g, '<span class="tok-str">$1</span>');
+  s = s.replace(/("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')/g, '<span class="tok-str">$1</span>');
+  s = s.replace(/\b(\d+\.?\d*)\b/g, '<span class="tok-num">$1</span>');
+  const kwMap = {
+    bash: /\b(if|then|else|elif|fi|for|while|do|done|case|esac|function|return|export|source|local|set|unset|shift|readonly|declare|trap|exit|exec|eval|cd|echo|printf|test)\b/g,
+    python: /\b(def|class|import|from|return|if|elif|else|for|while|try|except|finally|with|as|yield|lambda|pass|break|continue|raise|not|and|or|in|is|True|False|None|self|async|await)\b/g,
+    javascript: /\b(const|let|var|function|return|if|else|for|while|do|switch|case|break|continue|new|this|class|extends|import|export|from|default|try|catch|finally|throw|async|await|typeof|instanceof|true|false|null|undefined|void)\b/g,
+    typescript: /\b(const|let|var|function|return|if|else|for|while|do|switch|case|break|continue|new|this|class|extends|import|export|from|default|try|catch|finally|throw|async|await|typeof|instanceof|true|false|null|undefined|void|interface|type|enum|implements|declare|namespace|abstract|readonly|as|is|keyof|never|unknown|any)\b/g,
+    go: /\b(func|package|import|return|if|else|for|range|switch|case|break|continue|go|defer|select|chan|map|struct|interface|type|var|const|true|false|nil)\b/g,
+    rust: /\b(fn|let|mut|const|if|else|for|while|loop|match|return|use|mod|pub|struct|enum|impl|trait|self|super|crate|true|false|async|await|move|ref|where|type|as|in|dyn|unsafe|extern|static)\b/g,
+  };
+  const kw = kwMap[lang];
+  if (kw) s = s.replace(kw, '<span class="tok-kw">$1</span>');
+  return s;
+}
+
+// ─── TOOLTIP ────────────────────────────────────────────────────────────
+const tooltip = document.getElementById('tooltip');
+function showTooltip(e, sec, type) {
+  const color = TYPE_COLORS[type] || TYPE_COLORS.other;
+  let html = `<h4 style="color:${color}">${esc(sec.heading)}</h4>`;
+  html += `<div>${sec.lines} lines &middot; ${TYPE_LABELS[sec.type] || sec.type}</div>`;
+  if (sec.summary) html += `<div style="color:var(--text-muted);margin-top:0.25rem">${esc(sec.summary)}</div>`;
+  if (sec.referencedFiles && sec.referencedFiles.length)
+    html += `<div style="margin-top:0.4rem;color:var(--accent6)">Files: ${sec.referencedFiles.map(f => f.split('/').pop()).join(', ')}</div>`;
+  tooltip.innerHTML = html;
+  tooltip.style.display = 'block';
+  moveTooltip(e);
+}
+function moveTooltip(e) {
+  let x = e.clientX + 16, y = e.clientY + 16;
+  if (x + 380 > window.innerWidth) x = e.clientX - 396;
+  if (y + 200 > window.innerHeight) y = e.clientY - 200;
+  tooltip.style.left = x + 'px'; tooltip.style.top = y + 'px';
+}
+function hideTooltip() { tooltip.style.display = 'none'; }
+
+// ─── NAVIGATION HELPERS ─────────────────────────────────────────────────
+function esc(s) { return escHtml(String(s || '')); }
+function escHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function switchTab(viewId) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  const tab = document.querySelector(`.tab[data-view="${viewId}"]`);
+  const view = document.getElementById(viewId);
+  if (tab) tab.classList.add('active');
+  if (view) view.classList.add('active');
+}
+
+function scrollToSection(id) {
+  switchTab('skillmd');
+  setTimeout(() => {
+    const el = document.getElementById('sec-' + id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.querySelectorAll('.toc-item').forEach(i => i.classList.toggle('active', i.dataset.section === id));
+  }, 50);
+}
+
+// ─── TAB SWITCHING ──────────────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    switchTab(tab.dataset.view);
+    if (tab.dataset.view === 'flow') setTimeout(renderFlow, 50);
+  });
+});
+
+// ─── INIT ───────────────────────────────────────────────────────────────
+if (DATA.skill) {
+  renderIdentity();
+  renderSkillMd();
+  renderStructure();
+  renderCodeBrowser();
+  renderFlow();
+  window.addEventListener('resize', () => {
+    if (document.getElementById('flow').classList.contains('active')) renderFlow();
+  });
+}
+</script>
+</body>
+</html>
