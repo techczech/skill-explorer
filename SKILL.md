@@ -9,14 +9,14 @@ Generate an interactive HTML visualization from any SKILL.md-based skill. Produc
 
 ## Scope
 
-Only handles standalone **SKILL.md-based skills** — the `02_workskills/` pattern with YAML frontmatter + markdown + companion scripts. Does NOT handle NanoClaw internal skills.
+Only handles standalone **SKILL.md-based skills** — the `05_skills/` pattern with YAML frontmatter + markdown + companion scripts. Does NOT handle NanoClaw internal skills.
 
 ## Workflow
 
 ### 1. Ask the User
 
 Ask the user:
-- **Which skill** to visualize — get the path to the skill directory (e.g. `~/gitrepos/02_workskills/text-to-image`)
+- **Which skill** to visualize — get the path to the skill directory (e.g. `~/gitrepos/05_skills/text-to-image`)
 - **Where to output** — the directory for the generated `index.html` and companion files
 - **Deploy?** — whether to deploy to Cloudflare Pages after generation
 
@@ -102,7 +102,7 @@ const DATA = {
 
 ### 7. Generate the HTML
 
-1. Copy the template from `~/gitrepos/02_workskills/skill-explorer/templates/skill-viz.html`
+1. Copy the template from `~/gitrepos/05_skills/skill-explorer/templates/skill-viz.html`
 2. Find the `const DATA = {};` placeholder near the top of the `<script>` block
 3. Replace it with `const DATA = <your JSON>;` using the data model from step 6
 4. Write the result to the user's chosen output directory as `index.html`
